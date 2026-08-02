@@ -1,0 +1,9 @@
+model\User$Credentials.class
+tests\UserRegisterTest.class
+client\UserClient.class
+client\OrderClient.class
+generators\UserGenerator.class
+tests\OrderCreateTest.class
+tests\UserLoginTest.class
+model\User.class
+config\Endpoints.class
