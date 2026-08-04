@@ -2,9 +2,11 @@ package tests;
 
 import client.UserClient;
 import generators.UserGenerator;
+import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import model.User;
+import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Test;
 
@@ -26,6 +28,7 @@ public class UserRegisterTest {
 
     @Test
     @DisplayName("Создание уникального пользователя возвращает успешный ответ")
+    @Description("Проверка успешной регистрации уникального пользователя")
     public void registerUniqueUserShouldReturnSuccess() {
         User user = UserGenerator.getRandomUser();
 
@@ -33,7 +36,7 @@ public class UserRegisterTest {
 
         response.then()
                 .assertThat()
-                .statusCode(200)
+                .statusCode(HttpStatus.SC_OK)
                 .body("success", equalTo(true))
                 .body("user.email", equalTo(user.getEmail()))
                 .body("user.name", equalTo(user.getName()))
@@ -45,8 +48,10 @@ public class UserRegisterTest {
 
     @Test
     @DisplayName("Повторная регистрация уже существующего пользователя возвращает ошибку 403")
+    @Description("Проверка невозможности повторной регистрации уже существующего пользователя")
     public void registerAlreadyExistingUserShouldReturnError() {
         User user = UserGenerator.getRandomUser();
+
         Response firstResponse = userClient.register(user);
         accessTokenToCleanUp = firstResponse.then().extract().path("accessToken");
 
@@ -54,21 +59,62 @@ public class UserRegisterTest {
 
         secondResponse.then()
                 .assertThat()
-                .statusCode(403)
+                .statusCode(HttpStatus.SC_FORBIDDEN)
                 .body("success", equalTo(false))
                 .body("message", equalTo("User already exists"));
     }
 
     @Test
-    @DisplayName("Регистрация без обязательного поля email возвращает ошибку 403")
-    public void registerWithoutRequiredFieldShouldReturnError() {
+    @DisplayName("Регистрация без email возвращает ошибку 403")
+    @Description("Проверка регистрации пользователя без обязательного поля email")
+    public void registerWithoutEmailShouldReturnError() {
         User userWithoutEmail = UserGenerator.getRandomUser().withoutEmail();
 
         Response response = userClient.register(userWithoutEmail);
 
         response.then()
                 .assertThat()
-                .statusCode(403)
+                .statusCode(HttpStatus.SC_FORBIDDEN)
+                .body("success", equalTo(false))
+                .body("message", equalTo("Email, password and name are required fields"));
+    }
+
+    @Test
+    @DisplayName("Регистрация без пароля возвращает ошибку 403")
+    @Description("Проверка регистрации пользователя без обязательного поля password")
+    public void registerWithoutPasswordShouldReturnError() {
+        User user = UserGenerator.getRandomUser();
+        User userWithoutPassword = new User(
+                user.getEmail(),
+                null,
+                user.getName()
+        );
+
+        Response response = userClient.register(userWithoutPassword);
+
+        response.then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_FORBIDDEN)
+                .body("success", equalTo(false))
+                .body("message", equalTo("Email, password and name are required fields"));
+    }
+
+    @Test
+    @DisplayName("Регистрация без имени возвращает ошибку 403")
+    @Description("Проверка регистрации пользователя без обязательного поля name")
+    public void registerWithoutNameShouldReturnError() {
+        User user = UserGenerator.getRandomUser();
+        User userWithoutName = new User(
+                user.getEmail(),
+                user.getPassword(),
+                null
+        );
+
+        Response response = userClient.register(userWithoutName);
+
+        response.then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_FORBIDDEN)
                 .body("success", equalTo(false))
                 .body("message", equalTo("Email, password and name are required fields"));
     }

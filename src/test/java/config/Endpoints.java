@@ -7,8 +7,4 @@ public class Endpoints {
     public static final String DELETE_USER = "/auth/user";
     public static final String ORDERS = "/orders";
     public static final String INGREDIENTS = "/ingredients";
-
-    private Endpoints() {
-
-    }
 }
